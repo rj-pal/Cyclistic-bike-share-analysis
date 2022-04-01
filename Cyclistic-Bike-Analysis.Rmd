@@ -1,0 +1,1092 @@
+---
+title: "Cyclistic Bike Analysis"
+author: "Rob J Pal"
+date: "17/08/2021"
+output: 
+  html_document:
+    code_folding: hide
+---
+#### Preliminary Notes:  
+
+First, I'd like to comment that I will take a unique approach in this report. Since the actual interaction between stakeholders is limited to the information as stated in the Google Data Analytics [Capstone Case Study Cours](https://www.coursera.org/learn/google-data-analytics-capstone?specialization=google-data-analytics), I am limited in my ability to ask direct questions to the stakeholders for clarification on the purpose of the analysis as well as about the data. I had some questions about the ficticious bike company Cyclistic and the data, which is based on the bike share system in the city of Chicago.
+
+Thus, I did some of my own research on Divvy Bike system in Chicago to help try to clarify my curiosities and concerns. Some of my comments for this report will be from the perspective of inside the role-play/case study, while other will be "meta" comments and will be indicated in bold.
+
+Second, this is an **amalgamation of two separate analysies.** I found it more relevant to expand beyond the original constraints set out in the instructions, as I **could not interact with the actually stakeholders.** In the first one, I looked at data, grouped quarterly, starting from **April 2019 to March 2020** (as the original r-script prompted to). During this initial analysis, I was prompted by many questions and turned to my own research.  After further research on the Divvy website, I discovered some key information about the pricing system and types of bikes. I finished the initial analysis with more questions for the business task at hand. 
+
+My research found that the city **introduced electronic bikes in around July/August of 2020**, in which the purpose of that measure was to **increase ridership**. Also given that **the Covid19 pandemic had just started at the beginning of 2020**, I concluded that this might also **impact ridership** in a major way. I thought it relevant to include more data to capture the effects of these two key factors, in addition to some new bench marks I had established. In the second analysis, I looked at monthly data from **June 2020 to May 2021**. I then combined the two data sets and added more data (April/May 2020, June 2021) into one bigger analysis, for a total of **27 months** of data.
+
+Third, the original R-script was created by Kevin Hartman (Hartman) and was included in the case study assignment. For the sake of this case study, I will assume he is a member of my data analytics team.
+
+Finally, the analysis and conclusions found here are the results of this my combined data analysies built upon the original R-script by Hartman.
+
+# Ask 
+
+#### The Company and Stakeholders: 
+The fictional Cyclistic bike-share program is based on the Divvy bike-share system in Chicago. The company is looking to increase the number of annual subscribers and it is my role to see how riders who have a membership to the system differ from those that don't, and how the company can boast subscriber numbers through social media.
+
+The following is detailed summary of the Case Study taken from the Capstone Assignment document, and modified slightly for brevity.
+
+*The company Cyclistic is a bike-share program with more than 5,800 bicycles and 600 docking stations. The bikes can be unlocked from one station and returned to any other station in the system anytime. The service sets itself apart from other services by offering various other bikes for people with disablities, but the majority of riders (92%) opt for traditional bikes. It has flexible pricing plans: single-ride or full-day passes, and annual memberships. Customers who purchase single-ride or full-day passes are referred to as casual riders. Customers who purchase annual memberships are Cyclistic members. Cyclistic users are more likely to ride for leisure, but about 30% use them to commute to work each day.*
+
+*The stakeholders are Lily Moreno, the director of marketing and my manager, the marketing analytics team, and the executive team. The executive team is detailed oriented and will make the final decisions. Moreno is responsible for the development of campaigns and initiatives to promote the bike-share program, including social media. My team and I are responsible for collecting, analyzing, and reporting data that helps guide Cyclistic marketing strategy.*
+
+*Marketing strategy had relied on building general awareness and appealing to broad consumer segments, and the pricing flexibility helped Cyclistic attract more customers. Now, Cyclistic’s finance analysts have concluded that annual members are much more profitable than casual riders, and Moreno believes that maximizing the number of annual members will be key to future growth. Rather than creating a marketing campaign that targets all-new customers, Moreno believes there is a very good chance to convert casual riders into members. She notes that casual riders are already aware of and have chosen the program.*
+
+*The goal is clear: Design marketing strategies aimed at converting casual riders into annual members. In order to do that, however, the marketing analyst team needs to better understand the trends on how annual members and casual riders differ, why casual riders would buy a membership, and how digital media could affect their marketing tactics.*
+
+*Three questions will guide the future marketing program:*
+1. *How do annual members and casual riders use Cyclistic bikes differently?*
+2. *Why would casual riders buy Cyclistic annual memberships?*
+3. *How can Cyclistic use digital media to influence casual riders to become members?*
+
+#### My Goal and Business Task
+
+As stated above in the case-study brief, the assignment clearly sets up the situation and my role in the analysis. I am working with my data analytics team, so for the sake of this role play, I am acting as if Kevin Hartman is a part of my team, and that he performed some initial analysis and wrote some R-code. Therefore, it is assumed that he helped me with this report. His contribution is duly noted here. Furthermore, I am to report directly to Lily Moreno and prepare my findings for the executive team. 
+
+With this in mind:
+
+* My goal is to make recommendations on how to convert casual users to annual users through the influence of digital media.
+
+* My business task is to find out the difference between how annual and casual members use the bikes in order to answer why a casual member would purchase an annual membership.
+
+This is the starting point of my analysis.
+
+# Prepare 
+
+### About the Data
+The data in this analysis was downloaded directly from the [Divvy website](https://divvy-tripdata.s3.amazonaws.com/index.html) through AWS. It follows the principles of being reliable, original, comprehensive, current, and cited data. In other words, it ROCCCs! 
+
+It is made available by *Motivate International Inc.* under this license found [here](https://www.divvybikes.com/data-license-agreement). Copies of the data are stored on my computer for use in my analysis. Proper Data Ethics are met with my compliance under this license. In short, I am using it for the sole purpose of analysis in the case study, and not for commercial purposes. In addition, I am not conducting data mining nor trying to correlate data with names or other information of customers. Lastly, I am **in no way** affiliated, approved, sponsered or endorsed by *Motivate International Inc.* 
+
+After a short struggle with the data and spreadsheets, it quickly became apparent that due to the large nature of the data, I would need to use R to perform my data analysis. Since the data is open and readily available to use, I downloaded and stored copies on my own computer for use with R Studio. I was ready for a quick look at the data.
+
+### About the Business Task
+I had some initial questions at the back of my mind, and after a quick look at the initial data, I had more questions and I wanted to establish some metrics for the analysis.
+
+Due to the fact that I cannot ask questions directly to any stakeholder, I decided to research the organization that the case study is based on <https://www.divvybikes.com>. I also found [this report](https://www.chicago.gov/content/dam/city/depts/cdot/Divvy/Lyft_E-Bike_FactSheet.pdf) by the city of Chicago to be useful.  Here are some key takeaways:
+
+* *Single-rides* cost **$3.30** for *30 min-rides*. 
+* *Full-day passes* cost **$15** for **unlimited** *3-hour rides* within *24 hour period*. 
+* *Annual membership* costs **$9/month** (**$108** billed up front) for **unlimited** *45-min rides*. 
+* *D4E* is a special pass at a reduced rate for people who qualify. 
+* There are various overcharges per minute if your ride is longer than that listed above, and the cost depends on your type of membership and bike, but it is about **$0.15 per minute**.
+
+Based on this cost structure, it would be beneficial to find out how often a non-member uses the system versus members. That is how many single ride trips they take in a year and/or how many day passes they purchase in a year.
+
+#### Refinement of the Business Task
+
+On a per month basis, the annual membership averages out to be equivalent to the cost of a little **less than three single-ride trips per month**. Time-wise, in three trips with an annual membership, you get a total **8,100** seconds (135 mins) and $0.90 savings compared with **5,400** seconds (90 mins) purchasing single-ride trips. At a total cost of **$108**, it is equivalent to **32.7 single-ride trips per year**. Factoring in the **unlimited 45-min rides within a month**, it is far better to be a member than pay for single-ride trips if you are **over than 32 ride threshold within a year**, even if they have to pay upfront. **Regular single-ride users should be purchasing a member pass**, especially with D4E where you can get a membership fee at a reduced cost under certain conditions.
+
+Comparing single rides with day passes, in time-wise measures, you get unlimited rides in three hour chunks that would cost **$19.80 for one three hour trip in single rider fees**, all for $15. Four shorter single ride trips in one day, or getting on and off the bike twice, **would cost you $13.20**. It is easy to see that anyone intending to **stop-and-go more than twice in a day**, or **taking longer rides**, would be better off buying a day pass.
+
+For a casual customer who predominantly uses the system for this type of unlimited daily travel, an annual pass is equivalent to **7.2 day passes in a year**. Even with a trade off of shorter ride times (Annual members can pay by the minute if they go over 45 mins), it seems reasonable to buy an annual membership if you are using day passes on the weekend or on other occasions **a couple of times a month**. In addition, for casual users who buy single rides around **30 times per year**, or the equivalent of **5 times a month in half a year**, it would be financially viable to purchase an annual membership.  Any current customer or potential bike user who fits into either of these two categories just need to be urged to make the cost-benefit calculus of buying an annual membership up front. 
+
+One hesitation for buying an annual membership may be the climate. Many people in Chicago are probably discouraged to ride in the cold weather, so it is likely there are people who would only ride from May to October when the weather is favorable. They may view buying an annual membership as a waste of money when considering the fact that they wouldn't use it for half of the year. But this is the wrong way to look at it.
+
+For the success of the campaign, it is vital to market the casual single-riders who takes advantage of the bikes when the sun is out a couple of times per week, or day pass users who may only ride on weekends in the warmer weather. For customers who lie within the bounds of those benchmarks, even if only riding in the warmer months, the cost-benefit of an annual membership outweighs continuing to purchase non-member rides. If you are a casual member who mixes both buying day passes and single-rides every month in warmer times, or any time of the year for that matter, the trade off of an upfront membership versus unlimited 45 minute rides anytime should be an easy decision: even just taking rides on Saturdays or Sundays each month in the warmer months would be a better financial option in the long run. And, once having the pass in one's possession, one would be more inclined to use it any time and thus creating a bigger windfall.
+
+[In addition to marketing to day pass users, there would be much potential in marketing to users
+I think it is best to marker to those riders who fit into the above profiles.]
+If it is possible to get the details of repeat casual users and how they use the system, it would optimize the best way to market to those individuals. However, because of privacy concerns as stated in the case study assignment sheet "**that data-privacy issues prohibit you from using riders’ personally identifiable information...to connect pass purchases...to determine if casual riders live in the Cyclistic service area or if they have purchased multiple single passes.**", it may not be possbile to gather this requisite information, and I will have to rely on the duration of trips and total number of trips, rather than the number of trips an individual user takes, to analyize the data. In a real life situation, I would inquire more to see if there was any way to obtain this information by consulting with the data team.
+
+Therefore, in addition to the questions outlined earlier, some additional questions are:
+
+1. What is the average duration time for casual riders? Do they tend to be singe-ride users or day pass users? 
+2. What percentage of users ride over 30 mins / 45 mins / 3 hours? When do riders tend to take longer trips?
+
+# Process 
+
+With these new goals and business task in mind, I was ready to process the data.
+
+I started with the original R script by Hartman, available here at  <https://artscience.blog/home/divvy-dataviz-case-study>, as the launching point for my analysis. All code is a modification and expansion of that original script. Some code and results are excluded or hidden for readability.
+
+I used *tidyverse, lubridate, ggplot2*, and *skimr* (code excluded) for processing and analysis.
+```{r setup and global settings, include=FALSE}
+knitr::opts_chunk$set(fig.width=12, fig.height=8, warning=FALSE, message=FALSE)
+library(tidyverse)  #helps wrangle/manage data
+library(lubridate)  #helps wrangle date attributes
+library(ggplot2)  #helps visualize data
+library(skimr)  #helps to summarize data
+```
+### Process and Clean Data: Q2 2019 to Q1 2020
+
+I read in the four data sets: *Divvy_Trips_q2_2019.csv* to *Divvy_Trips_q1_2020.csv* (code excluded)
+```{r read data from csv files, include=FALSE}
+setwd("/Users/robertjfpal/Bike-share-analysis/data") #set working directory to access files easily
+q2_2019 <- read_csv("Divvy_Trips_2019_Q2.csv")
+q3_2019 <- read_csv("Divvy_Trips_2019_Q3.csv")
+q4_2019 <- read_csv("Divvy_Trips_2019_Q4.csv")
+q1_2020 <- read_csv("Divvy_Trips_2020_Q1.csv")
+```
+I examined the structure of the data using the skimr and dyplr packages to get a detailed look at it.
+```{r examine the structure data, eval=FALSE}
+glimpse(q1_2020)
+glimpse(q4_2019)
+glimpse(q3_2019)
+glimpse(q2_2019)
+skim_without_charts(q1_2020)
+skim_without_charts(q4_2019)
+skim_without_charts(q3_2019)
+skim_without_charts(q2_2019)
+```
+The key findings for quarterly data are:
+
+1. The name of the columns are inconsistent between *q2_2019*, *q1_2020* and the other two quarters.
+2. Bike ID are numeric for all 2019 data, but is non-numeric and called rideable_type.
+3. There is only one unique type of rideable bike: *docked_bike*.
+4. In the 2019 data, there are two user types, 'subscriber' and 'customer'. 
+5. In the 2020 data, the two user types are 'member' and 'casual', which is the standard that is mentioned in the initial documentation (see earlier).
+
+*All of the findings above and the modifications below were done in accordance with the analysis by Hartman*.
+
+I renamed all columns to be consistent with *q1_2020* data and beyond.
+
+I converted the type of ride_id and rideable_type to characters in order to bind the charts. 
+
+I created a data frame: **all_trips_quarter**
+
+I removed start and end station ID and lat./long. data, as well as gender and birthday fields, which were only in the *q2_2019* data.
+```{r data clean up and standardization, results="hide"}
+(q4_2019 <- rename(q4_2019
+                   ,ride_id = trip_id
+                   ,rideable_type = bikeid
+                   ,started_at = start_time
+                   ,ended_at = end_time
+                   ,start_station_name = from_station_name
+                   ,start_station_id = from_station_id
+                   ,end_station_name = to_station_name
+                   ,end_station_id = to_station_id
+                   ,member_casual = usertype))
+
+(q3_2019 <- rename(q3_2019
+                   ,ride_id = trip_id
+                   ,rideable_type = bikeid
+                   ,started_at = start_time
+                   ,ended_at = end_time
+                   ,start_station_name = from_station_name
+                   ,start_station_id = from_station_id
+                   ,end_station_name = to_station_name
+                   ,end_station_id = to_station_id
+                   ,member_casual = usertype))
+
+(q2_2019 <- rename(q2_2019
+                   ,ride_id = "01 - Rental Details Rental ID"
+                   ,rideable_type = "01 - Rental Details Bike ID"
+                   ,started_at = "01 - Rental Details Local Start Time"
+                   ,ended_at = "01 - Rental Details Local End Time"
+                   ,start_station_name = "03 - Rental Start Station Name"
+                   ,start_station_id = "03 - Rental Start Station ID"
+                   ,end_station_name = "02 - Rental End Station Name"
+                   ,end_station_id = "02 - Rental End Station ID"
+                   ,member_casual = "User Type"))
+
+q4_2019 <-  mutate(q4_2019, ride_id = as.character(ride_id)
+                   ,rideable_type = as.character(rideable_type))
+q3_2019 <-  mutate(q3_2019, ride_id = as.character(ride_id)
+                   ,rideable_type = as.character(rideable_type))
+q2_2019 <-  mutate(q2_2019, ride_id = as.character(ride_id)
+                   ,rideable_type = as.character(rideable_type))
+
+all_trips_quarter <- bind_rows(q2_2019, q3_2019, q4_2019, q1_2020)
+
+all_trips_quarter <- all_trips_quarter %>%
+  select(-c(start_station_id, end_station_id, start_lat, start_lng, end_lat, end_lng, birthyear, gender, "01 - Rental Details Duration In Seconds Uncapped",
+"05 - Member Details Member Birthday Year", "Member Gender", "tripduration"))
+glimpse(all_trips_quarter)
+skim_without_charts(all_trips_quarter)
+table(all_trips_quarter$member_casual)
+```
+I transformed the customer and subscriber to member and casual to be consistent with *q1_2020* data. A note on this nomenclature was mentioned by Hartman.
+
+In my research, according to the **report by the city of Chicago**, mentioned earlier and found [here](https://www.chicago.gov/content/dam/city/depts/cdot/Divvy/Lyft_E-Bike_FactSheet.pdf), ebikes were introduced in July of 2020, and the data analysis following this first part will show this result as well. *I therefore concluded that docked_bike here refers to what will later be classified as classic_bike* (a pedal bike) and I decided to transform all values in rideable_type to docked_type from a bike_id number, to keep with this nomenclature. If this were not a role-play, **I would confirm this assumption with a stakeholder**.
+
+I standardized the bike type to one: **docked type**.
+```{r more data clean-up and standardization, results='hide'}
+table(all_trips_quarter$member_casual)
+all_trips_quarter <-  all_trips_quarter %>%
+  mutate(member_casual = recode(member_casual
+                                ,"Subscriber" = "member"
+                                ,"Customer" = "casual"))
+# Change all former bike_id to "docked_bike"
+all_trips_quarter$rideable_type <- c("docked_bike")
+which(all_trips_quarter$rideable_type != "docked_bike")
+```
+Here is a summary of the final data for *all_trips_quarter* to confirm this step in the completion of data cleaning.
+```{r show summary of quarterly data after clean-up, class.source = 'fold-show'}
+glimpse(all_trips_quarter)
+unique(all_trips_quarter$member_casual)
+unique(all_trips_quarter$rideable_type)
+```
+### Process and Clean Data: April 2020 to June 2021
+
+I read in the fifteen data sets: *202004-divvy-tripdata.csv* to *202106-divvy-tripdata.csv* (code excluded)
+```{r read the files, include=FALSE}
+setwd("/Users/robertjfpal/Bike-share-analysis/data") #set working directory to access files
+april_2020 <- read_csv("202004-divvy-tripdata.csv")
+may_2020 <- read_csv("202005-divvy-tripdata.csv")
+june_2020 <- read_csv("202006-divvy-tripdata.csv")
+july_2020 <- read_csv("202007-divvy-tripdata.csv")
+aug_2020 <- read_csv("202008-divvy-tripdata.csv")
+sept_2020 <- read_csv("202009-divvy-tripdata.csv")
+oct_2020 <- read_csv("202010-divvy-tripdata.csv")
+nov_2020 <- read_csv("202011-divvy-tripdata.csv")
+dec_2020 <- read_csv("202012-divvy-tripdata.csv")
+jan_2021 <- read_csv("202101-divvy-tripdata.csv")
+feb_2021 <- read_csv("202102-divvy-tripdata.csv")
+march_2021 <- read_csv("202103-divvy-tripdata.csv")
+april_2021 <- read_csv("202104-divvy-tripdata.csv")
+may_2021 <- read_csv("202105-divvy-tripdata.csv")
+june_2021 <- read_csv("202106-divvy-tripdata.csv")
+```
+I examined the structure of the data to get a detailed look at it.
+```{r examine the structure of the data, results = 'hide'}
+glimpse(april_2020)
+glimpse(may_2020)
+glimpse(june_2020)
+glimpse(july_2020)
+glimpse(aug_2020)
+glimpse(sept_2020)
+glimpse(oct_2020)
+glimpse(nov_2020)
+glimpse(dec_2020)
+glimpse(jan_2021)
+glimpse(feb_2021)
+glimpse(march_2021)
+glimpse(april_2021)
+glimpse(may_2021)
+glimpse(june_2021)
+skim_without_charts(april_2020)
+skim_without_charts(may_2020)
+skim_without_charts(june_2020)
+skim_without_charts(july_2020)
+skim_without_charts(aug_2020)
+skim_without_charts(sept_2020)
+skim_without_charts(oct_2020)
+skim_without_charts(nov_2020)
+skim_without_charts(dec_2020)
+skim_without_charts(jan_2021)
+skim_without_charts(feb_2021)
+skim_without_charts(march_2021)
+skim_without_charts(april_2021)
+skim_without_charts(may_2021)
+skim_without_charts(june_2021)
+```
+The key findings for the monthly data are:
+
+1. Start and End Station ID before Dec 2020 are numeric, but are characters after.
+2. There are three unique bike types from Dec 2020: electric, classic and docked.
+3. There are two unique bike types July - Nov 2020: electric and docked.
+4. There is only one unique bike type from April - June 2020: docked.
+3. The number of total rows equals the number of unique ride IDs.
+
+As mentioned in the [previously mentioned](https://www.chicago.gov/content/dam/city/depts/cdot/Divvy/Lyft_E-Bike_FactSheet.pdf) report, "classic pedal bikes will continue to be parked at Divvy docking stations only [while] ebikes can be parked at Divvy docking stations, Divvy E-stations, or any public bike rack." The report also mentions that "Divvy E-stations are clusters of bike racks." In addition, I also examined the [Divvy Bike Map](https://account.divvybikes.com/map) and it indicates that there are stations with docks where there are no ebikes, and ebike exclusive stations where it says, "Parking for pedal bikes can be found at the docks icons on your map", suggesting that docks refer to pedal bikes. Therefore, I will assume for the sake of this report that from December 2020 onward, when there are three types of bikes, that *docked type* continues to refer to a type of *pedal bike*. Still, considering that ebikes can be docked at any docking station, it is not 100% clear that this is the case. **Please keep this in mind since I cannot determine absolute certainty due to the limitations of the case study and would confirm with a member of the Divvy Team in a real situation before proceeding**. 
+
+Here are three summaries of the monthly data to show the differences in the data outlined above.
+```{r show results of two distinct monthly chart, class.source = 'fold-show'}
+glimpse(april_2020)
+glimpse(july_2020)
+glimpse(dec_2020)
+unique(april_2020$rideable_type)
+unique(july_2020$rideable_type)
+unique(dec_2020$rideable_type)
+```
+I converted all pre-Dec 2020 station ID data to character type in order to be able to bind the data.
+
+I created a data frame: **all_trips_monthly**
+
+I removed start and end station ID and lat./long. data
+```{r data cleaning and standardization, results='hide'}
+april_2020 <-  mutate(april_2020, start_station_id = as.character(start_station_id)
+                     , end_station_id = as.character(end_station_id))
+
+may_2020 <-  mutate(may_2020, start_station_id = as.character(start_station_id)
+                     , end_station_id = as.character(end_station_id))
+
+june_2020 <-  mutate(june_2020, start_station_id = as.character(start_station_id)
+                     , end_station_id = as.character(end_station_id))
+
+july_2020 <-  mutate(july_2020, start_station_id = as.character(start_station_id)
+                     , end_station_id = as.character(end_station_id))
+
+aug_2020 <-  mutate(aug_2020, start_station_id = as.character(start_station_id)
+                    , end_station_id = as.character(end_station_id))
+
+sept_2020 <-  mutate(sept_2020, start_station_id = as.character(start_station_id)
+                     , end_station_id = as.character(end_station_id))
+
+oct_2020 <-  mutate(oct_2020, start_station_id = as.character(start_station_id)
+                    , end_station_id = as.character(end_station_id))
+
+nov_2020 <-  mutate(nov_2020, start_station_id = as.character(start_station_id)
+                    , end_station_id = as.character(end_station_id))
+
+all_trips_monthly <- bind_rows(april_2020, may_2020, june_2020, july_2020,
+                               aug_2020, sept_2020, oct_2020, nov_2020,
+                               dec_2020, jan_2021, feb_2021, march_2021,
+                               april_2021, may_2021, june_2021)
+
+all_trips_monthly <- all_trips_monthly %>%
+  select(-c(start_station_id, end_station_id, start_lat, start_lng, end_lat, end_lng))
+
+glimpse(all_trips_monthly)
+skim_without_charts(all_trips_monthly)
+```
+Here is a summary of the final data for *all_trips_monthly* to confirm this step in the completion of data cleaning.
+
+Note: There is a slight difference, 209, between the number of rows and the number of unique ride_ids. The numbers were unique and matched for each month, so I am not concerned about this small number affecting the results.
+```{r show summary of monthly data after clean-up, class.source = 'fold-show'}
+glimpse(all_trips_monthly)
+nrow(all_trips_monthly)
+length(unique(all_trips_monthly$ride_id))
+```
+I checked if the column name's for quarterly and monthly data matched in both data frames, and then bound them together.
+
+I created a combined data frame: **all_trips**
+```{r combine the two data sets, results='hide'}
+colnames(all_trips_quarter)
+colnames(all_trips_monthly)
+
+all_trips <- bind_rows(all_trips_quarter, all_trips_monthly)
+skim_without_charts(all_trips)
+```
+Here is a quick confirmation of the combined data frame.
+```{r check the new data frame, class.source = 'fold-show'}
+glimpse(all_trips)
+```
+I added columns that list the date, month, day, and year of each ride and checked the data. As Hartman noted in his report (R-script), the original data "at the ride level..is too granular."
+```{r add new columns for date, month, day, year, results='hide'}
+all_trips$date <- as.Date(all_trips$started_at)
+all_trips$month <- format(as.Date(all_trips$date), "%m")
+all_trips$day <- format(as.Date(all_trips$date), "%d")
+all_trips$year <- format(as.Date(all_trips$date), "%Y")
+all_trips$day_of_week <- format(as.Date(all_trips$date), "%a")
+glimpse(all_trips)
+```
+Trip duration was dropped from the original data in *q1_2020*, and also I removed that data column for 2019 earlier. 
+
+I recalculated trip duration and created a new metric in a column called **ride_length** that shows the duration of each trip.
+```{r create new data field ride duration, results='hide'}
+all_trips$ride_length <- difftime(all_trips$ended_at,all_trips$started_at)
+skim_without_charts(all_trips$ride_length)
+```
+I converted the data to numeric type in order to perform calculations on the data.
+```{r convert the type to numeric, results='hide'}
+is.factor(all_trips$ride_length)
+all_trips$ride_length <- as.numeric(as.character(all_trips$ride_length))
+is.numeric(all_trips$ride_length)
+glimpse(all_trips$ride_length)
+skim_without_charts(all_trips)
+```
+The data frame includes a few hundred entries when bikes were taken out of docks and checked for quality by Divvy or ride_length was negative, as stated by Hartman.
+
+I confirmed this by examining the data to find negative durations and a station named 'HQ QR', as seen below.
+```{r confirm unwanted data}
+all_trips %>%
+  count(ride_length < 0)
+all_trips %>%
+  count(start_station_name == "HQ QR")
+```
+I created a new version of the data frame (v2) since data is being removed, as per [Hartman's advice](https://www.datasciencemadesimple.com/delete-or-drop-rows-in-r-with-conditions-2/). A quick confirmation and summary is included.
+```{r create new data frame}
+all_trips_v2 <- all_trips[!(all_trips$start_station_name == "HQ QR" | all_trips$ride_length<0),]
+glimpse(all_trips_v2)
+```
+The data is now ready for analysis.
+
+# Analyze 
+
+My main focus was to look at how member and casual riders differ by examining two main measures: duration and bike type. I wanted to how long riders used the bikes in accordance with my benchmarks, and I wanted to see if the introduction of ebikes increased ridership
+
+### Brief Review of Analysis One and Two
+
+In the original analysis following Hartman (the original quarterly data set), I calculated some basic statistics for duration (ride_length), which was followed by aggregating duration by user type (member_casual). These stats were then proceeded by further aggregation by day of week with some accompanying charts. I did the same process when analyzing the monthly data in the second analysis, where I also made some additional visualizations. In order to get a better picture, I aggregated by bike type (rideable_type) and year, by user type and month, by user type *and* month and year, and by bike type and month from June 2020 to the end of the data set. 
+
+The code below shows the original R-script with Hartman's comments plus my additional code. It is for the combined data set and is here to demonstrate my thinking process. The results and visualizations are not shown.
+```{r code block of first two analysis for key statistic and charts, results='hide', fig.keep = "none"}
+summary(all_trips_v2$ride_length)
+# Compare members and casual users
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual, FUN = mean)
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual, FUN = median)
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual, FUN = max)
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual, FUN = min)
+
+# See the average ride time by each day for members vs casual users
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual + all_trips_v2$day_of_week, FUN = mean)
+
+# Notice that the days of the week are out of order. Let's fix that.
+all_trips_v2$day_of_week <- ordered(all_trips_v2$day_of_week, levels=c("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"))
+
+# Now, let's run the average ride time by each day for members vs casual users
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$member_casual + all_trips_v2$day_of_week, FUN = mean)
+
+# analyze ridership data by type and weekday
+all_trips_v2 %>%
+  mutate(weekday = wday(started_at, label = TRUE)) %>%  #creates weekday field using wday()
+  group_by(member_casual, weekday) %>%  #groups by usertype and weekday
+  summarise(number_of_rides = n()							#calculates the number of rides and average duration
+            ,average_duration = mean(ride_length)) %>% 		# calculates the average duration
+  arrange(member_casual, weekday)								# sorts
+
+# Let's visualize the number of rides by rider type
+all_trips_v2 %>%
+  mutate(weekday = wday(started_at, label = TRUE)) %>%
+  group_by(member_casual, weekday) %>%
+  summarise(number_of_rides = n()
+            ,average_duration = mean(ride_length)) %>%
+  arrange(member_casual, weekday)  %>%
+  ggplot(aes(x = weekday, y = number_of_rides, fill = member_casual)) +
+  geom_col(position = "dodge")
+
+# Let's visualize average duration by rider type
+all_trips_v2 %>%
+  mutate(weekday = wday(started_at, label = TRUE)) %>%
+  group_by(member_casual, weekday) %>%
+  summarise(number_of_rides = n()
+            ,average_duration = mean(ride_length)) %>%
+  arrange(member_casual, weekday)  %>%
+  ggplot(aes(x = weekday, y = average_duration, fill = member_casual)) +
+  geom_col(position = "dodge")
+
+#-------------------------------------------------------------
+# From here is my code - thanks to Hartman for the assistance
+#-------------------------------------------------------------
+
+# A visualization showing proportion of member/casual by bike type and year
+all_trips_v2 %>%
+  drop_na(member_casual, rideable_type) %>%
+  group_by(member_casual, rideable_type) %>%
+  ggplot(aes(x = rideable_type)) +
+  geom_bar(aes(fill = member_casual)) +
+  facet_wrap(~year)
+
+# A visualization showing proportion of member/casual by month
+all_trips_v2 %>%
+  drop_na(member_casual, month) %>%
+  group_by(member_casual, month) %>%
+  ggplot(aes(x = month)) +
+  geom_bar(aes(fill = member_casual))
+
+# A visualization showing proportion of member/casual by month and year
+all_trips_v2 %>%
+  drop_na(member_casual, month) %>%
+  group_by(member_casual, month) %>%
+  ggplot(aes(x = month)) +
+  geom_bar(aes(fill = member_casual)) +
+  facet_wrap(~year)
+
+# N.B. some of the aggregations mentioned above are not shown here and can be seen later sections
+
+# A visualization showing average duration by month and year, member/casual
+all_trips_v2 %>%
+  drop_na(member_casual, year, month) %>%
+  group_by(member_casual, year, month) %>%
+  summarise(number_of_rides = n()
+            ,average_duration = mean(ride_length)) %>%
+  arrange(member_casual, year, month) %>%	
+  ggplot(aes(x = month, y = average_duration, fill = member_casual)) +
+  geom_col(position = "dodge") +
+  facet_wrap(~year)
+
+# Visualizations of proportion of members/casual by type of bike for each month in 2020
+
+# For 2020, I used the monthly tables
+june_2020%>%
+  group_by(member_casual, rideable_type)%>%
+  ggplot(aes(x = rideable_type)) +
+  geom_bar(aes(fill = member_casual))
+
+july_2020%>%
+  group_by(member_casual, rideable_type)%>%
+  ggplot(aes(x = rideable_type)) +
+  geom_bar(aes(fill = member_casual))
+
+aug_2020%>%
+  group_by(member_casual, rideable_type)%>%
+  ggplot(aes(x = rideable_type)) +
+  geom_bar(aes(fill = member_casual))
+
+sept_2020%>%
+  group_by(member_casual, rideable_type)%>%
+  ggplot(aes(x = rideable_type)) +
+  geom_bar(aes(fill = member_casual))
+
+oct_2020%>%
+  group_by(member_casual, rideable_type)%>%
+  ggplot(aes(x = rideable_type)) +
+  geom_bar(aes(fill = member_casual))
+
+nov_2020%>%
+  group_by(member_casual, rideable_type)%>%
+  ggplot(aes(x = rideable_type)) +
+  geom_bar(aes(fill = member_casual))
+
+dec_2020%>%
+  group_by(member_casual, rideable_type)%>%
+  ggplot(aes(x = rideable_type)) +
+  geom_bar(aes(fill = member_casual))
+
+# For 2021,I filtered the all_trips table
+all_trips_v2%>%
+  filter(month == "01")%>%
+  group_by(member_casual, rideable_type)%>%
+  ggplot(aes(x = rideable_type)) +
+  geom_bar(aes(fill = member_casual))
+
+all_trips_v2%>%
+  filter(month == "02")%>%
+  group_by(member_casual, rideable_type)%>%
+  ggplot(aes(x = rideable_type)) +
+  geom_bar(aes(fill = member_casual))
+
+all_trips_v2%>%
+  filter(month == "03")%>%
+  group_by(member_casual, rideable_type)%>%
+  ggplot(aes(x = rideable_type)) +
+  geom_bar(aes(fill = member_casual))
+
+all_trips_v2%>%
+  filter(month == "04")%>%
+  group_by(member_casual, rideable_type)%>%
+  ggplot(aes(x = rideable_type)) +
+  geom_bar(aes(fill = member_casual))
+
+all_trips_v2%>%
+  filter(month == "05")%>%
+  group_by(member_casual, rideable_type)%>%
+  ggplot(aes(x = rideable_type)) +
+  geom_bar(aes(fill = member_casual))
+
+all_trips_v2%>%
+  filter(month == "06")%>%
+  group_by(member_casual, rideable_type)%>%
+  ggplot(aes(x = rideable_type)) +
+  geom_bar(aes(fill = member_casual))
+```
+I was planning to explore this second data set more. However, it was at this point that I decided that I wanted to *combine the data sets* and *fill in the gaps* in order to get a complete picture of the effects of Covid and ebikes. One main reason was because I noticed a proportional decrease in casual members as summer turned to winter, but a proportional increase in 2021 as winter gave way to spring. I wanted to see the changes across a time span of more than one year, so I created a data set of two years and one quarter.
+
+### The New Data Set: Part 1
+In the combined analysis, I retraced my steps repeating the same cleaning and analyzing to check the data (see the code above), and then I jumped straight to a look at duration and rider count by month.
+
+Looking at the visualization for monthly stats, I noticed some unusual high durations for January and February, as seen in the chart below. This is also very noticeable when separated into year (chart not shown) This was puzzling because in winter months, ride time would normally be lower given the cold. After noticing this, I took a side-step to explore the source of this out-of-place result. The yearly chart (see below in the next section) pointed towards the beginning of 2020 as the place to look.
+```{r bar chart duration by month}
+all_trips_v2 %>%
+  drop_na(member_casual, month) %>%
+  group_by(member_casual, month) %>%  
+  summarise(number_of_rides = n()	
+            ,average_duration = mean(ride_length)) %>%
+  arrange(member_casual, month) %>%	
+  ggplot(aes(x = month, y = average_duration, fill = member_casual)) +
+  geom_col(position = "dodge")
+```
+
+### A Monthly Deep Dive: More Data Processing and Cleaning
+
+In the data aggregated by year, month and member_casual, you can clearly see some very high averages at the beginning of 2020 which is distorting average duration. 
+```{r count and average duration by month and year for member/casual}
+#Stats by year/month
+all_trips_v2 %>%
+  drop_na(member_casual, month, year) %>%
+  group_by(member_casual, month, year) %>%  
+  summarise(number_of_rides = n()		
+            ,average_duration = mean(ride_length)) %>% 	
+  arrange(member_casual, month, year) 
+```
+Looking at the maximum values of ride_length in more detail below, for all data from the monthly data set (April 2020 and onward), there are some max values around 3,000,000 (3M), but none higher than about **3.5M**. From the quarterly data, we see all values over 2M, with a max duration as high as around **9M**- three times higher than the highest in the other data set. For perspective, that is equal to about **34 days versus 104 days**. It seems odd that there would be a bike trip lasting 3 months, let alone 1 month!
+
+Even though there are some high max values in other months, they only seem to have an adverse effect on the winter months and casual users. This is not logical given the winter conditions of a city in the north next to Lake Michigan in addition to the stats that are lower on all major measures and months. I started to suspect that there was something going on.
+```{r max ride length by month and year}
+aggregate(all_trips_v2$ride_length ~ all_trips_v2$month + all_trips_v2$year, FUN = max)
+# aggregate(all_trips_v2$ride_length ~ all_trips_v2$month + all_trips_v2$year, FUN = mean)
+```
+From here, I honed in on the first three months where the duration averages were unusual, suspecting that some outlier data points could be the source of the distortion. I compared some key stats for the first three months of 2020 and 2021 as seen in the chart below. Where there were some very high data points, the median and mean were very far apart from each other. This suggests that there are enough of these outlier data points to distort the average. I investigated further by looking at the density of the three months across the two years.
+
+Comparing the scatter plot for Q1 of 2020 with random noise with one for Q1 of 2021, they clearly show a lot of distortion coming from casual members in 2020. Note that in 2021, there is **no** distortion in the member side, and all data points are **under 2M**, with most outliers under **500K** on the casual side. This is not the case in 2020, where there are quite a lot of data points **over 500K** comparatively speaking. This reinforced my suspicions that outlier data points were not actual trips and were affecting the data in negative way. 
+```{r monthly key stats}
+all_trips_v2 %>%
+  drop_na(member_casual, month) %>%
+  group_by(member_casual, month, year) %>%
+  summarise(count = n(), median = median(ride_length),
+            mean = mean(ride_length), max = max(ride_length)) %>%
+  filter(month == "01" | month == "02" | month == "03" ) %>%
+  arrange(member_casual, month, year)
+
+q1_2020$ride_length <- difftime(q1_2020$ended_at,q1_2020$started_at)
+q1_2020$ride_length <- as.numeric(as.character(q1_2020$ride_length))
+q1_2020$date <- as.Date(q1_2020$started_at) #The default format is yyyy-mm-dd
+q1_2020$month <- format(as.Date(q1_2020$date), "%m")
+
+q1_2020 %>%
+  group_by(month, ride_length) %>%
+  ggplot(aes(x = month, y = ride_length, colour = member_casual)) +
+  geom_jitter() +
+  facet_wrap(~member_casual) + 
+  ggtitle("Jan to Mar 2020")
+
+all_trips_v2 %>%
+  filter(month == "01" & year == "2021"  | month == "02" & year == "2021"  | month == "03" & year == "2021" ) %>%
+  ggplot(aes(x = month, y = ride_length, colour = member_casual)) +
+  geom_jitter() +
+  facet_wrap(~member_casual) +
+  ggtitle("Jan to Mar 2021")
+```
+With all majority of the high data points coming from casual users and having dropped the maintenance stations from the data, I concluded that there must be some anomaly in the data, like thefts, lost bikes, bikes not docked properly, a glitch in the software tracking the bikes, or something else causing the high duration times that are not intentional by casual riders.
+
+**In this situation in a real scenario, I would inquire further with the data team, the data engineers, or someone in charge of the collection of data about these high data point and their possible cause. For the purpose of this analysis, I will continue on with my assumption.**
+
+From my research on the bike share system, day trip passes are valid for 24 hours and allow 3 hour rides before docking is necessary to avoid extra payment. Under the assumption that the high values distorting the data are not actual rides, I decided to see how removing data over these two bench marks affected the key measures, mainly average duration.
+
+I made three new data frame that contains the monthly data aggregated by year and user type, called **monthly_user_stats, monthly_user_stats_3hr, monthly_user_stats_24hr**. I also calculated how much data is lost when removing rides that exceeded those duration benchmarks. As you can see below, the number of rides over 3 hours is only a little over half a percent, while the number of rides over 24 hours is negligible.
+```{r deep dive with table creations for various ride length durations}
+# Monthly table for all trips with duration greater than 0
+monthly_user_stats <- all_trips_v2 %>%
+  drop_na(member_casual, month) %>%
+  group_by(member_casual, month, year) %>%
+  summarise(total = n(), median_ride = median(ride_length), max_ride = max(ride_length)
+            , average_duration = mean(ride_length)) %>%
+  arrange(member_casual, month, year) %>%
+  rename(user = member_casual)
+
+# Create a table for trips under 10800 seconds/3 hrs
+monthly_user_stats_3hrs <- all_trips_v2 %>%
+  filter(ride_length <= 10800) %>%
+  drop_na(member_casual, month) %>%
+  group_by(member_casual, month, year) %>%
+  summarise(total = n(), median_ride = median(ride_length), max_ride = max(ride_length)
+            , average_duration = mean(ride_length)) %>%
+  arrange(member_casual, month, year) %>%
+  rename(user = member_casual)
+
+m <- nrow(filter(all_trips_v2, !(ride_length <= 10800)))
+n <- nrow(all_trips_v2)
+lossage <- m/n*100
+capture.output(cat("The amount of data lost is if only include rides up to 3 hours:",lossage, "%"))
+
+# Create a table for trips under 86400 seconds/24 hrs
+monthly_user_stats_24hrs <- all_trips_v2 %>%
+  filter(ride_length <= 86400) %>%
+  drop_na(member_casual, month) %>%
+  group_by(member_casual, month, year) %>%
+  summarise(total = n(), median_ride = median(ride_length), max_ride = max(ride_length)
+            ,average_duration = mean(ride_length)) %>%
+  arrange(member_casual, month, year) %>%
+  rename(user = member_casual)
+
+m <- nrow(filter(all_trips_v2, !(ride_length <= 86400)))
+lossage <- m/n*100
+capture.output(cat("The amount of data lost is if only include rides up to 24 hours:",lossage,"%"))
+```
+ I then wanted to see how strongly these large ride times were impacting the ride length data. I created two monthly comparison charts that displayed the type of *user*, the *month* and *year*, the *number of rides* and the *average duration* of the **whole data set** compared to the **reduced data** set at **3 hrs** and **24 hrs**.
+```{r}
+# 3 hour monthly data frame comparison
+monthly_stat_comparison_3hr <- bind_cols(monthly_user_stats, monthly_user_stats_3hrs)
+monthly_stat_comparison_3hr <- monthly_stat_comparison_3hr %>%
+  select(c(1,2,3,4,7,11,14)) %>%
+  rename("user"=1, "mo."=2, "yr."=3, "rides"=4, "avg_dur"=5, "rides_3hr"=6, "avg_dur_3hr"=7)
+monthly_stat_comparison_3hr$diff_rides <- (monthly_stat_comparison_3hr$rides - monthly_stat_comparison_3hr$rides_3hr)
+monthly_stat_comparison_3hr$diff_dur <- (monthly_stat_comparison_3hr$avg_dur - monthly_stat_comparison_3hr$avg_dur_3hr)
+
+# 24 hour monthly data frame comparison
+monthly_stat_comparison_24hr <- bind_cols(monthly_user_stats, monthly_user_stats_24hrs)
+monthly_stat_comparison_24hr <- monthly_stat_comparison_24hr %>%
+  select(c(1,2,3,4,7,11,14)) %>%
+  rename("user"=1, "mo."=2, "yr."=3, "rides"=4, "avg_dur"=5, "rides_24hr"=6, "avg_dur_24hr"=7)
+monthly_stat_comparison_24hr$diff_rides <- (monthly_stat_comparison_24hr$rides - monthly_stat_comparison_24hr$rides_24hr)
+monthly_stat_comparison_24hr$diff_dur <- (monthly_stat_comparison_24hr$avg_dur - monthly_stat_comparison_24hr$avg_dur_24hr)
+
+print(monthly_stat_comparison_3hr, n = 54)
+print(monthly_stat_comparison_24hr, n = 54)
+
+compare_3hrs_to_24_hrs_duration <- c(monthly_stat_comparison_24hr$diff_dur - monthly_stat_comparison_3hr$diff_dur)
+
+compare_3hrs_to_24_hrs_duration
+```
+On the whole, the average duration changes very little as seen in the charts above. Looking at the 3 hour trip ride data for members, all changes in average are under 5 minutes (see the column titled **diff_dur**). For casual users, the change ranges from around a **7 to 40-minute difference**, with the exception being two huge differences for Jan and Feb 2020, as the previous Jan to Mar 2020 scatter plot suggested. Almost all larger changes occur in the quarterly data set before April 2020. In addition, the difference in ride numbers range from *83 to 6739*, with all member ride number differences in the hundreds. Again, this shows that **only a very small percentage of the total riders who are taking trips over 3 hrs**, and the vast majority are from casual users.
+
+Taking into consideration the 24 hr data, we see the same general trends in the differences. Narrowing the data has almost no effect on the average member duration. A difference of the differences display a range from a max of less than **15 minutes to a min of 16 seconds**. Again, the biggest differences are seen in the Q1 2020. **This means that aggregating the data from 24 hour trips to 3 hour trips does not show a major change** in the average duration length. And, the difference in the number of rides for trips under 24 hours compared to the whole vary from **10 to 667**. There are so few rides over 24 hours that the ones that are are distorting the data and not accurately representing how users use the bikes. This suggests to me that something changed in how the bikes were managed or dealt with, or how the data was managed or collected. **Again, I would inquire more into this situation if it were not a role-play.** Eliminating the noise in the long tails would give us a better picture of how users, both member and casual, use the bike share service.  
+
+This noise can be confirmed with some density diagrams below. For 24 hr trips, the data still has a huge right-skew. There is a **99% chance** that a casual member (bandwidth of about 60 seconds) uses a bike for about **3 hours and 20 mins or less**; the 99-percentile for members (bandwidth of about 20 seconds) is just **over 45 mins.**  Comparing the 24hr chart to the 3hr chart, there still is a positive-skew, and for members the **99 percentile is virtually the same**. For casual users, **95% of users ride a bike for around 100 minutes or less** in both cases.
+```{r comparison of 24 and 3 hour ride durations for member and casual users}
+# Data Frames that filter out trip rides over 24 hours
+member_24 <- all_trips_v2 %>%
+  filter(member_casual == "member" & ride_length < 86400) %>%
+  drop_na(ride_length)
+
+casual_24 <- all_trips_v2 %>%
+  filter(member_casual == "casual" & ride_length < 86400) %>%
+  drop_na(ride_length)
+
+# Density Plots and Key Percentiles for 24 hrs
+member_24 %>%
+  ggplot( aes(x=ride_length)) +
+  geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+  ggtitle("Density of Members: Rides up to 24 Hrs")
+
+#density_member_24 <- density(member_24$ride_length)
+#plot(density_member_24, main = "Density of Members: Rides up to 24 Hrs")
+"Quantiles for Members with Ride Length under 24-Hours"
+quantile(member_24$ride_length, c(.5, .75, .9, .95, .99))
+
+casual_24 %>%
+  ggplot( aes(x=ride_length)) +
+  geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+  ggtitle("Density of Casual Riders: Rides up to 24 Hrs")
+  
+#density_casual_24 <- density(casual_24$ride_length)
+#plot(density_casual_24, main = "Density of Casual Riders: Rides up to 24 Hrs")
+"Quantiles for Casual Riders with Ride Length under 24-Hours"
+quantile(casual_24$ride_length, c(.5, .75, .9, .95, .99))
+
+# Data Frames that filter out trip rides over 3 hours
+member_3 <- all_trips_v2 %>%
+  filter(member_casual == "member" & ride_length < 10800) %>%
+  drop_na(ride_length)
+
+casual_3 <- all_trips_v2 %>%
+  filter(member_casual == "casual" & ride_length < 10800) %>%
+  drop_na(ride_length)
+
+# Density Plots and Key Percentiles for 3 hrs
+
+member_3 %>%
+  ggplot( aes(x=ride_length)) +
+  geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+  ggtitle("Density of Members: Rides up to 3 Hrs")
+
+#density_member_3 <- density(member_3$ride_length)
+#plot(density_member_3, main = "Density of Members: Rides up to 3 Hrs")
+
+"Quantiles for Members with Ride Length under 3-Hours"
+quantile(member_3$ride_length, c(.5, .75, .9, .95, .99))
+
+casual_3 %>%
+  ggplot( aes(x=ride_length)) +
+  geom_density(fill="#69b3a2", color="#e9ecef", alpha=0.8) +
+  ggtitle("Density of Casual Riders: Rides up to 3 Hrs")
+  
+#density_casual_3 <- density(casual_3$ride_length)
+#plot(density_casual_3, main = "Density of Casual Riders: Rides up to 3 Hrs")
+
+"Quantiles for Casual Riders with Ride Length under 3-Hours"
+quantile(casual_3$ride_length, c(.5, .75, .9, .95, .99))
+```
+With such a big skew of the distribution when considering all the recorded trips, I concluded that reducing the data set would give me a more accurate picture of how member and casual users differ. Only about 1 in 180 rides were over 3 hours while 1 in 1450 rides were over 24 hours, thus I decided to limit my data to rides under 3 hours.
+
+### The New Data Set: Part 2
+
+For the sake of bin-width and to allow for usage a little over the 3-hour benchmark, I decided to limit my data set to **12,900 seconds**, or *3 hours and 35 minutes*. I examined the refined data set organized by member-casual and three other aggregations: per month, per day of the week, and per bike type. First, I looked at some basic summary statistics of the refined data set, and then explored ride length and number of rides in more detail. Here are the summary charts for aggregation by *month* and by *day of the week*.
+```{r create new final table and some data}
+all_trips_v3 <- all_trips_v2[!(all_trips_v2$ride_length > 12900 ),]
+
+all_trips_v3 %>%
+  drop_na(member_casual, month) %>%
+  group_by(member_casual, month) %>%  
+  summarise(number_of_rides = n()	
+            , average_duration = mean(ride_length), median_duration = median(ride_length)) %>%
+  arrange(member_casual, month) %>%
+  rename(User = member_casual, Month = month) %>%
+  print(n = Inf)
+
+all_trips_v3 %>%
+  drop_na(member_casual, day_of_week) %>%
+  group_by(member_casual, day_of_week) %>%  
+  summarise(number_of_rides = n()	
+            , average_duration = mean(ride_length), median_duration = median(ride_length)) %>%
+  arrange(member_casual, day_of_week) %>%
+  rename(User = member_casual, Day = day_of_week)
+```
+Looking at ride length for monthly figures, in the first graph below, average duration **tends to increase as the weather gets nicer** (with the exception of June for casual riders), with a low in January and a peak in July, and decreases as the weather cools. This is sensible considering the geographic location of Chicago.
+```{r isualization for duration, monthly stats}
+all_trips_v3 %>%
+  drop_na(member_casual, month) %>%
+  group_by(member_casual, month) %>%  
+  summarise(average_duration = mean(ride_length)) %>%
+  ggplot(aes(x = month, y = average_duration, fill = member_casual)) +
+  geom_col(position = "dodge") +
+  ggtitle("Monthly Average Duration: Member vs Casual")
+```
+When looking at the same monthly data aggregated on a yearly basis in the second graph, I observed some exceptions. For casual riders, June durations were always less than May, and May is similar to or higher than July. There were small spikes in December 2019 and November 2020 when that month was higher than the previous month. Interestingly, I think we can see the effects of the electric bikes, as **the average duration times are lower for 2021 in all months** compared to the previous two years. For members, the average duration is much more consistent in rising and falling with the seasons. Average ride times are significantly higher (by around 5 minutes) in the warmer months in 2020, during the first year of the COVID crisis, with average times for 2021 being comparable to 2019. It is important to note that the average durations for 2021 are actually quite flat from February to June, suggesting that maybe members are consistently using electric bikes for commuting or fixed trips, thus leveling out the average ride length.
+
+Comparing casual riders to members, the average ride length is **twice as long** or more. Especially this was the case for 2019, where there were months where the average ride was closer to three times longer. However, after the introduction of electric bikes, **the average duration for casual riders on the whole decreased** compared to previous years, and in the winter months, were less than twice as long as rides by members.
+```{r visualization for duration, monthly stats by year}
+all_trips_v3 %>%
+  drop_na(member_casual, year, month) %>%
+  group_by(member_casual, year, month) %>%  
+  summarise(average_duration = mean(ride_length)) %>%
+  ggplot(aes(x = month, y = average_duration, fill = member_casual)) +
+  geom_col(position = "dodge") +
+  facet_wrap(~year) +
+  ggtitle("Monthly Average Duration by Year: Member vs Casual")
+```
+Looking at ride length for days of the week, I saw consistent U-shapes for both member and casual riders with **higher durations on Saturdays and Sundays** as seen in the first graph here. 
+```{r visualization for duration, day of week stats}
+all_trips_v3 %>%
+  drop_na(member_casual, day_of_week) %>%
+  group_by(member_casual, day_of_week) %>%  
+  summarise(average_duration = mean(ride_length)) %>%
+  ggplot(aes(x = day_of_week, y = average_duration, fill = member_casual)) +
+  geom_col(position = "dodge") +
+  ggtitle("Day of Week Average Duration: Member vs Casual")
+```
+Jumping to the yearly aggregated data, ride length for weekdays by members were **almost uniformly flat across all time periods** (with a slight negative variation in 2021), suggesting that members regularly use the bikes for fixed periods of time, i.e. commuting. Durations for casual members showed a bit more of a sharper U-shape, with sharper decreases and increases than members, bottoming out on Wednesday or Thursday. 2021 was again interesting for casual riders showing a steady **decrease from a maximum on Sunday to a minimum duration on Thursday, with all average durations for weekdays being less than the previous two year**. The highest ride length across the three years were in 2019 for casual riders. On the other hand, 2020 had the highest ride length overall for members, but only ever so slightly, with average durations being pretty much **equal across the three years**. I believe these trends are the result of electric bikes being introduced and used more by casual riders, and the consistent use of the bike share program by members for commuting.
+
+Comparing the two directly, average duration tends to be **twice as long or more** for casual riders, with the difference getting **smaller each year**, as the average ride length for casual users decreased across the board over the three year, while it reminded pretty much the same for members.
+```{r visualization for duration, day of week stats by year}
+all_trips_v3 %>%
+  drop_na(member_casual, year, day_of_week) %>%
+  group_by(member_casual, year, day_of_week) %>%  
+  summarise(average_duration = mean(ride_length)) %>%
+  ggplot(aes(x = day_of_week, y = average_duration, fill = member_casual)) +
+  geom_col(position = "dodge") +
+  facet_wrap(~year) +
+  ggtitle("Day of Week Average Duration by Year: Member vs Casual")
+```
+The charts for the number of rides taken by members versus casual users tell a different story. At first glance, the graph below shows that total rides by members is always higher than by casual riders, ranging from around **5 to 9 times as many** in the winter months (also see the chart above at the beginning of this section, *'The New Data Set: Part 2'*), to only about **1.5 as many** in the summer months, with the remaining months being at about **2 times as many**. This indicates a **severe gap in the proportion of casual riders to members who continue to take trips when the weather is cold**. As expected, the ridership numbers for both increase and decrease with the changing seasons. It is important to note that only the second quarter (April/May/June) include ride counts for all three years, with the third and fourth quarters including the years 2019 and 2020, while the first quarter only includes 2020 and 2021. This is why I focused on the proportional difference between member and casual riders. 
+```{r visualization for number of rides, monthly stats}
+all_trips_v3 %>%
+  drop_na(member_casual, month) %>%
+  group_by(member_casual, month) %>%  
+  summarise(number_of_rides = n()) %>%
+  ggplot(aes(x = month, y = number_of_rides, fill = member_casual)) +
+  geom_col(position = "dodge") +
+  ggtitle("Monthly Number of Rides: Member vs Casual")
+```
+It is more telling to look in detail at the number of rides aggregated by year as seen in the graphs and chart below. I discovered some very interesting observations as each year had very different numbers. In 2019, there was a **stark difference between the number of rides taken by casual users and members**, with the number being **at least twice as large or much more across the board** (as noted above in the non-aggregated data). The gap is at its largest in January 2020, but **things changed dramatically from May 2020** onward. May is the first month where the gap is quite small with the proportion of casual riders making up almost **3/4 of the ridership numbers for members** (or just 1.32 times larger), and the difference continues to narrow from there. In July, the numbers are almost equal. The difference starts to widen again, and **only dips below 1/2** from December 2020 to February 2021. Again in 2021, the proportion of casual riders to members increases as the weather gets warmer, and, for the final month in the data, June 2021, **the number of casual riders actually exceeds the number of members**. This could indicate that members became casual riders as a result of the uncertainty of COVID, or that more people became interested in the bike share program as a result of changes in working habits due to COVID. I think this avenue of though would be interesting to explore in more detail.
+```{r visualization for number of rides, monthly stats by year}
+all_trips_v3 %>%
+  drop_na(member_casual, year, month) %>%
+  group_by(member_casual, year, month) %>%  
+  summarise(number_of_rides = n()) %>%
+  ggplot(aes(x = month, y = number_of_rides, fill = member_casual)) +
+  geom_col(position = "dodge") +
+  scale_y_continuous(labels = scales::comma) +
+  facet_wrap(~year) +
+  ggtitle("Monthly Number of Rides by Year: Member vs Casual")
+
+all_trips_v3 %>%
+  drop_na(member_casual, year, month) %>%
+  group_by(member_casual, year, month) %>%  
+  summarise(number_of_rides = n()) %>%
+  arrange(member_casual, year, month) %>%
+  rename(User = member_casual) %>%
+  print(n = Inf)
+```
+For number of rides aggregated by day of the week, **the overall trend for casual riders is U-shaped**, with much larger total rides on the weekends, and slightly higher ride numbers on Fridays versus the other weekdays. On the other hand, **the overall trend for members is the opposite**. The number of rides is at the lowest on Sundays, increases and peaks on Wednesdays, and decreases again down to Saturdays. Comparing members to casual users, total rides are around **3 times as many** Mondays to Thursdays, about **2 times as many** on Fridays; however, the weekend shows the number of rides to be **almost equal**, with members having a slight edge. Numbers for Saturdays for both types of riders is a little larger than Sundays.
+```{r visualization for number of rides, day of week stats}
+all_trips_v3 %>%
+  drop_na(member_casual, day_of_week) %>%
+  group_by(member_casual, day_of_week) %>%
+  summarise(number_of_rides = n()) %>%
+  ggplot(aes(x = day_of_week, y = number_of_rides, fill = member_casual)) +
+  geom_col(position = "dodge") +
+  ggtitle("Day of Week Number of Rides: Member vs Casual")
+```
+Examining the data by year again tells a more complete story. **2019 follows the overall trend across all years** for both types of riders, except it has a **more prominent drop** in the number of rides on the weekends for members. **2020 shows some subtle shifting trends**. For members, the overall trend is almost the same, except **the drop in weekend ridership is not prominent**; that is because **the overall number of rides on weekdays dropped dramatically compared to 2019**, while **the number of rides on Saturdays and Sundays increased** (with Saturday being even higher than Monday). Interestingly, the trend for casual riders again **matched 2019 and the overall trend**; however, the total number of rides across both weekdays and the weekend increased, with the number of Saturday rides equaling the number of members' Saturday rides. It is important to note that **the numbers for 2019 are missing the first quarter**, the winter months, so that would have a slight impact on making the overall numbers for 2019 a little bigger, but would probably not impact the overall trend too much. 
+
+The year 2021 only includes 6 months of data, but from the initial numbers it looks like **total numbers are on track to outpace 2020**, as also indicated in the monthly data. Again, the trend for casual users follows the same course, with the only exception being a slight dip in numbers on Thursdays. Members' numbers show the same with a dip on Thursdays. It is more important to notice that **the gap between casual riders and members on weekdays has narrowed year on year**, while for both Saturday and Sunday, **the gap has reversed**: casual riders **outnumber** members.
+```{r visualization for number of rides, day of week stats by year}
+all_trips_v3 %>%
+  drop_na(member_casual, year, day_of_week) %>%
+  group_by(member_casual, year, day_of_week) %>%
+  summarise(number_of_rides = n()) %>%
+  ggplot(aes(x = day_of_week, y = number_of_rides, fill = member_casual)) +
+  geom_col(position = "dodge") +
+  facet_wrap(~year) +
+  ggtitle("Day of Week Number of Rides by Year: Member vs Casual") 
+```
+Looking at the total ride numbers in proportion of members and casual riders is also very telling. The first chart shows the monthly data where **the sharpest decrease year-wise between 2019 and 2020 being at the beginning of the COVID crisis**, namely April, May, and June. Tellingly, **the numbers jumped in July 2020, with the totals for July to November almost equaling or exceeding 2019**. As noted earlier, starting from May 2020 **the proportion of member to casual riders approached parity at 50-50** until the winter which saw decreased numbers to the previous year, and similar proportions. Starting in March 2021, there was **a surge in ridership each month, with increased numbers compared to both previous years**. This overall increase was accounted for by the change in the number of casual users' rides which really **skyrocketed compared to both 2019 and 2020**, culminating with the number of casual riders surpassing members in June 2020. At the same time, the number of member rides in March, April, May and June were comparable to May, June, July, and August of 2020; that means **the numbers for earlier months in 2021 were reaching the peak ride season numbers of 2020**. Those stats for April to June were almost a return to 2019 numbers for members, indicating a recovery to pre-COVID numbers. Combined with the huge increase in casual users, **the overall trend in 2021 starting from March suggests that 2021 will have higher numbers than the two previous years**, at least for the warmer months.
+```{r visualization for number of rides,  proportional monthly stats by year}
+all_trips_v3 %>%
+  drop_na(member_casual, year, month) %>%
+  group_by(member_casual, year, month) %>%
+  summarise(number_of_rides = n()) %>%
+  ggplot(aes(x = month, y = number_of_rides, fill = member_casual)) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(labels = scales::comma) +
+  facet_wrap(~year) +
+  ggtitle("Monthly Total Number of Rides by Year: Member vs Casual")
+```
+Taking a look at the yearly stats for days of the week, I again want start off by noting that **2019 numbers do not include the first three months of 2019**, and thus the overall numbers would be a **little more** than shown. But given the data from the other years, it would likely make the proportions between member and casual users even less, while at the same time, only slightly increasing overall numbers. Because **the proportion of member riders outweighed casual riders in 2019**, as seen in the monthly data, **the trend for 2019 matches the overall member trend** (as seen above) with the lowest numbers on Sundays, almost uniform numbers for weekdays, and Saturday numbers falling in between. **2020, however, shows a different pattern** because the number of casual riders increased. **The trend resembles the overall trend for casual riders**: a maximum ridership on Saturdays, a minimum on Mondays with weekday numbers gradually increasing to Fridays, which is equal to Sundays. Comparing **2019 to 2020** directly, the data seems to indicate (even if it is lacking 3 months in 2019) that **the overall numbers in 2020 were higher on the weekends**, while **overall numbers on weekdays were lower**. The trend for 2021 follows the same pattern as 2020 except with a flatter numbers across the weekdays (with a dip on Thursdays as previously noted). As discussed in the monthly data, with numbers for earlier months in 2021 matching peak season in 2020, the data is telling us that **overall numbers for 2021 should surpass 2020 and 2019**.
+```{r visualization for number of rides,  proportional day of week stats by yea}
+all_trips_v3 %>%
+  drop_na(member_casual, year, day_of_week) %>%
+  group_by(member_casual, year, day_of_week) %>%
+  summarise(number_of_rides = n()) %>%
+  ggplot(aes(x = day_of_week, y = number_of_rides, fill = member_casual)) +
+  geom_bar(stat = "identity") +
+  scale_y_continuous(labels = scales::comma) +
+  facet_wrap(~year) +
+  ggtitle("Day of Week Total Number of Rides by Year: Member vs Casual")
+```
+These **two trend shifts**: a more **equal proportion of casual riders to members** on the monthly level, and **change to higher ridership numbers on the weekends** on the day of the week level, may indicate a change in attitude by the public as a result of COVID. I believe that starting in April 2020, **members were probably commuting less** because of a shift in working habits away from the office due to lock downs and social distancing. It would be insightful **to know if the annual membership renewals also went down in this period and I would inquire and see if I could get more information in a real-life situation**, since the numbers indicate this could be the case. If that is so, then **members might not have renewed their annual membership** and **only use the bikes for commuting when they needed** to go to the office to check in **during the height of the COVID pandemic**. Since **member numbers recovered in 2021**, it suggests that **renewals are back up** to pre-pandemic levels or the bike share program is seeing **an increase in new annual members**. The **increase in overall ridership** as a result of the **increase in casual riders** may be due the effect of electronic bikes. Again, if people only have to go to the office occasionally, new riders may use the bikes for that purpose during the week. I think the increase in ridership on weekends is a result of "isolation fever"; people want to get out of the house and enjoy their time. With the risk serious infection in an outdoor environment seeming to be lower than thought at the beginning of the pandemic, peopel want to get out and enjoy the nice weather in Chicago ... we have to focus on this demographic!!!!!!
+
+
+To investigate this in more detail, I decided to aggregate the data by bike type to see if the introduction of electronic bikes was having an impact on the numbers, as I suspected they were. I first looked at the charts to see the numbers in aggregated detail
+```{r chart for number of rides and ride length aggregated by year, month and ride type}
+all_trips_v3 %>%
+    drop_na(year, month, rideable_type) %>%
+    group_by(year, month, rideable_type) %>%
+    summarise(number_of_rides = n()
+              , average_duration = mean(ride_length)) %>%
+    arrange(rideable_type, year, month) %>%
+    print(n = Inf)
+# all_trips_v3 %>%
+#     drop_na(member_casual, year, month, rideable_type) %>%
+#     group_by(member_casual, year, month, rideable_type) %>%  
+#     summarise(number_of_rides = n()	
+#               , average_duration = mean(ride_length)) %>%
+#     arrange(member_casual, rideable_type, year, month) %>%
+#     rename(User = member_casual) %>%
+#     print(n = Inf)
+```
+Taking a look at the same monthly data for overall numbers by *rideable_type* in the charts above and below, we see a **measurable effect** on ridership numbers in August 2020 compared to 2019, the second month of ebikes. The chart above shows that July **only had 1779 ebike rides** the first month they were introduced, but **increased drastically to 58548 the next month**. For September and October in the graph below, the **numbers between 2019 and 2020** are basically **the same**, while November shows an **impact with increased ridership** compared to 2019. With the exception of July where numbers recovered after the initial shock of COVID from April to June with minimal influence of ebikes, it seems that ebikes **meaningfully impacted overall ridership for 2020 numbers** and the effects can be seen more in 2021. 
+
+In the winter months, the **overall numbers decreased relative to 2019**, but interestingly, the **proportion of pedal to ebikes decreased**, indicating that **winter users were more likely to chose an ebike**. As the weather warms in 2021, the **proportion** of pedal to ebikes **increased** again, but at the same time, the **number of ebikes in use** also **increased a lot**, with **numbers of rides by ebikes** in April 2021 **almost matching** August 2020. In May and June, ebike rides **were higher** than the **peak month** of October 2020, surpassing **120K rides**.
+
+Looking at the **pedal bike numbers** (as discussed earlier, pedal bikes are both classic and docked type) for April to June 2021, the **numbers match** the pedal bike rides from 2019; thus, clearly showing the **ebikes are helping to propel the 2021 overall ride numbers to new heights**.
+
+The effect of electronic bikes on the overall numbers is obvious. Honing in on the **proportion of pedal bikes** (to remind the reader: pedal bikes are classic and docked types) in **April, May, and June of 2021**, these measures are **a little less than** the ridership numbers **in 2019** for those same months when there were **only docked (pedal) type bikes**. Thus, this graph shows that the introduction of electronic bikes **boosted the overall ride numbers** in the Bike Sharing Program, with **June 2021 having the highest ridership numbers** across **all months and years**. 
+```{r}
+all_trips_v3 %>%
+    drop_na(year, rideable_type) %>%
+    group_by(year, rideable_type) %>%
+    summarise(number_of_rides = n()
+              , average_duration = mean(ride_length)) %>%
+    arrange(rideable_type, year) %>%
+    print(n = Inf)
+
+# all_trips_v3 %>%
+#     drop_na(member_casual, rideable_type) %>%
+#     group_by(member_casual, rideable_type) %>%  
+#     summarise(number_of_rides = n()	
+#               , average_duration = mean(ride_length)) %>%
+#     print(n = Inf)
+
+# all_trips_v3 %>%
+#     drop_na(year, month, rideable_type) %>%
+#     group_by(year, month, rideable_type) %>%  
+#     summarise(number_of_rides = n(), average_duration = mean(ride_length)) %>%
+#     print(n = Inf)
+
+all_trips_v3 %>%
+    drop_na(member_casual, year, month, rideable_type) %>%
+    group_by(member_casual, year, month, rideable_type) %>%  
+    summarise(number_of_rides = n()) %>%
+    ggplot(aes(x = month, y = number_of_rides, fill = rideable_type)) +
+    geom_bar(stat = "identity") + 
+    scale_y_continuous(labels = scales::comma) +
+    facet_wrap(~year)
+```
+When examining the day of week data for bike type, I aggregated  by user type and year. Here, we see that December 2020 was indeed the last year that the *docked type* designation was used for members. The first interesting thing to note here is that for members, **weekend use of bikes increased dramatically in 2020 and 2021**, compared to 2019, with **little influence from the type of bike**. Again, the decrease in weekday ridership and the increase in weekend use could be attributed to COVID. The second interesting thing to note is the **pretty even use of ebikes by both members and casual users** across years and days of the week. Casual users have **slightly increased** use of ebikes on weekends, but nothing compared to the **bigger difference in weekend use of pedal bikes** by casual riders. Weekday use of ebikes is **marginally higher** for members than on weekend, and is negligible at best. One reason for this consistent use could be a limited number of ebikes. An investigation into the total number of bikes of all types would be needed to better understand this.
+```{r}
+all_trips_v3 %>%
+    drop_na(member_casual, year, day_of_week, rideable_type) %>%
+    group_by(member_casual, year, day_of_week, rideable_type) %>%  
+    summarise(number_of_rides = n()) %>%
+    ggplot(aes(x = day_of_week, y = number_of_rides, fill = rideable_type)) +
+    geom_bar(stat = "identity") + 
+    scale_y_continuous(labels = scales::comma) +
+    facet_wrap(~member_casual + year)
+
+```
+I believe the increase in ridership was the result of COVID. Members were probably commuting less because of a shift in working habits away from the office. Some members may only need to use a bike to go to work once in a while, and thus may have shifted to casual use. While at the same time, with the shift in workplace habit in addition to ebikes, new users may have been trying the system and using the bikes when needed, or taking advantage of the system to get some exercise and a break from COVID isolation. 
+
+The data also indicates that even with 3 hour ride allowance for day pass users, there is little evidence that casual riders take advantage of this. There is higher ridership numbers by casual riders on weekends, which may indicate more day pass users, but the average duration times do time support any large influx of day pass riders, at least non who take long rides. Most riders keep the trips short, regardless of the type of user.
+
+As stated in my business objectives, I wanted to see how casual riders and members differ when looking at trip lengths at different benchmarks. 
+
+Using the **the same data set** of rides under **3 hours and 35 minutes** (*12, 900 seconds*), I started off my analysis here by calculating quantile figures for both types of users, then for the data filtered by members and casual rider separately. The numbers found below indicate that **99% of members' ride lengths** are under **51 minutes**; while on the other hand, **99% of casual riders' ride lengths** are under **161 minutes**; more than three times longer. At both the **25% and 50%** quantile, members' ride lengths are **around half of** casual riders' ride lengths. This indicates that **the riders who take longer trips are more likely to be casual riders**.
+```{r quantile number of rides}
+"Quantile Values for All Users for Ride Length under 3 hrs 35 mins"
+quantile(all_trips_v3$ride_length, c(.5, .75, .9, .95, .99), na.rm=TRUE)
+"Quantile Values for Members"
+quantile(subset(all_trips_v3, member_casual == "member")$ride_length, c(.25, .5, .75, .9, .95, .99), na.rm=TRUE)
+"Quantile Values for Casual Users"
+quantile(subset(all_trips_v3, member_casual == "casual")$ride_length, c(.25, .5, .75, .9, .95, .99), na.rm=TRUE)
+```
+Based on the quantile figures above, I broke down the data into different bins of different ride lengths and different filters based on the quantile figures for the data, as seen in the first chart above. The following histograms give a sense of the scale and difference between member and casual users. 
+
+In the first one, which is broken down into **2-minute rides** with the data filtered to cover **95% of the data** (*3780 seconds*), we see a peak for the number of rides of under **200,000** for casual users, with a duration peak of between **540 to 660 seconds**, while members peak at under **800,000** rides with a duration peak of **420 to 540 seconds**. Both types of users reach a maximum ride count at a ride length duration **around 9 minutes** (the mode: *7-9 mins for members* and *9-11 mins for casual riders* respectively). From there, the ride counts of members **decline much more quickly and consistently** than casual users. The rate of change between 120-second time bins **decrease fairly evenly** for members **as ride length grows**. On the other hand, the rate of change for casual users is **more steady and less consistent**. The single *biggest decline* in the casual graph occurs at **the mark between 1860 to 1980 seconds**, or just after **the 30 minute mark**, which is not surprising given *the ride conditions as stated at the beginning of this report* (see section *'About the Business Task'*). Comparing the two histograms, **the count of rides for members is greater than** casual users up until around the 2000 second second mark. After that, **the ride count for casual users is greater**, but **not to the same magnitude** that member counts were before that turning point.
+```{r histograms to compare member and casual users, 2-min rides under 63 minutes}
+# 3780 seconds covers around 95% of the data
+all_trips_v3 %>%
+  filter(ride_length < 3780) %>%
+  ggplot( aes(x=ride_length)) +
+  geom_histogram(binwidth = 120, fill = "#56B4E9") +
+  scale_y_continuous(labels = scales::comma) +
+  facet_wrap(~member_casual) +
+  labs(title = "Count of Duration under 63 minutes by 2-minute Rides: 95% of the Data", caption = "Note: the first bin includes ride length of 0 to 1 minute")
+```
+When broken into **30-minute rides** and filtered to cover **99% of the data** (*8100 seconds*), we see **the first 15 minute bin entails the majority of the member rides**, while the **15-45 minute bin entails the majority of casual rides**, indicating that casual riders tend to take **slightly longer trips**. The second bin also shows an **almost equal number of trips by member and casual riders**. These first two bins are **dominated by member users**, and overwhelmingly show that  **the majority of members and casual users take trips under 45 minutes**. In fact, the **total ride numbers** are close to **8M** and are **indicative of the how most users use the bike sharing system**. For rides **under 15 minutes**, it is **more likely** to be from a **member**, while for rides **between 15 and 45 minutes**, the likelihood is closer to **50-50**. The remaining bins ((in mins) 45-75, 75-105, 105-135) are **all considerably smaller** and the **majority of rides** in these bins are from **casual users**. This indicates that if we were to take a longer trip **over 45 minutes**, it is **more likely** to be from a **casual rider**.
+```{r histograms to compare member and casual users, 30-min rides under 135 minutes}
+# Up to 8100 seconds covers around 99% of data
+all_trips_v3 %>%
+  filter(ride_length < 8100) %>%
+  ggplot( aes(x=ride_length, fill = member_casual)) +
+  scale_y_continuous(labels = scales::comma) +
+  geom_histogram(binwidth = 1800) +
+  labs( title = "Count of Total Duration under 135 Minutes (2 hours 15 minutes), by 30-minute Rides: 99% of Data", caption = "Note: the first bin includes ride length 0 to 15 minutes")
+```
+The final chart shows the above chart **without the first two bins** (the first bin is **45 mins to 75** mins, the second is **75 to 105** mins, the third bin is **105 to 135** mins- the three smaller bins from above) and includes the ride counts larger than 2 hours and 15 mins (bins (in mins): 135-165, 165-195, 195-215; the last bin only spanning only 20 minutes as the data includes up to 3 hrs and 35 mins). In **all of the 30-minute** ride length **groupings**, casual riders **clearly outweigh** members proportionally with a magnitude **6 times greater or more**. This chart reinforces the fact that the **vast majority of longer trips**, in this case longer meaning **over 45 mins**, are taken by **casual riders**. 
+
+Even so, the **total number** of trips **over 45 mins** are on a **much smaller magnitude** when compared to trips **under 45 mins**. For example, looking at the chart above and below, a **30-minute** ride span of **15 to 45 mins** includes around **3M** trips while **the next 30-minute** ride span (45 to 75 mins) has just over **400K**. That is around a **90% drop** in ride numbers. And, the number of rides in the first group, **only a 15-minute ride length**, includes close to **5M** rides. The only conclusion is that most riders use the bike share system for shorter trips.
+```{r histograms to compare member and casual users, 30-min rides over 45 minutes}
+all_trips_v3 %>%
+  filter(ride_length >= 2700) %>%
+  ggplot( aes(x=ride_length, fill = member_casual)) +
+  geom_histogram(binwidth = 1800) +
+  scale_y_continuous(labels = scales::comma) +
+  labs( title = "Count of Total Duration 45 Minutes to 3 hour 30 minutes, by 30-minute Rides", caption = "Note: the first bin includes ride length 45 to 75 minutes")
+```
+
+
+
+
+
+```{r unused charts}
+# all_trips_v3 %>%
+#   filter(ride_length < 4140) %>%
+#   ggplot( aes(x=ride_length, fill = member_casual)) +
+#   geom_histogram(binwidth = 120) +
+#   scale_y_continuous(labels = scales::comma)
+
+
+# all_trips_v3 %>%
+#   filter(ride_length >= 1800) %>%
+#   ggplot( aes(x=ride_length, fill = member_casual)) +
+#   geom_histogram(binwidth = 1800) +
+#   scale_y_continuous(labels = scales::comma) +
+#   labs( title = "Count of Total Duration 30 Minutes to 3 hour 30 minutes, by 30-minute Rides", caption = "Note: the first bin includes ride length 30 to 45 minutes")
+# all_trips_v3$year_month <- format(as.Date(all_trips_v3$date), "%Y/%m")
+
+
+# __________________________________________________
+# all_trips_v3 %>%
+#   drop_na(member_casual, rideable_type) %>%
+#   group_by(member_casual, rideable_type) %>%
+#   summarise(number_of_rides = n()) %>%
+#   arrange(member_casual, rideable_type)
+#   # print(n = Inf)
+# # 
+# all_trips_v3 %>%
+#   drop_na(year_month, member_casual, rideable_type) %>%
+#   group_by(year_month, member_casual, rideable_type) %>%
+#   summarise(number_of_rides = n()) %>%
+#   ggplot(aes(x = year_month, y = number_of_rides, group = rideable_type, colour = rideable_type)) +
+#   geom_line() +
+#   facet_wrap(~member_casual) +
+#   theme(axis.ticks = element_blank(), axis.text.x = element_blank())
+# # 
+# all_trips_v3 %>%
+#   drop_na(year, month, rideable_type) %>%
+#   group_by(year, month, rideable_type) %>%
+#   summarise(number_of_rides = n()) %>%
+#   ggplot() +
+#   geom_bar(aes(x = month, y = number_of_rides), stat = "identity", fill="#CCFFFF", width=0.5) +
+#   #geom_point(aes(x = month, y = number_of_rides, group=rideable_type, colour = rideable_type)) +
+#   geom_line(aes(x = month, y = number_of_rides, group=rideable_type, colour = rideable_type)) +
+#   scale_colour_manual(values=c("#0072B2","#009E73", "#D55E00")) +
+#   #scale_fill_hue(c=45,l=80) +
+#   facet_wrap(~year)
+
+```
